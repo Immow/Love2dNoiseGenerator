@@ -1,48 +1,76 @@
 local loveframes = require("loveframes")
 
 local tileSize = 16
-local sliderDrawThresholdValue = 0.5 -- Default threshold value
+local sliderDrawThresholdValue = 0.5
 local sliderWidth = 200
 local setPosLabelX = 10
 local setPosSliderX = 120
 local setPosSliderValueX = setPosSliderX + sliderWidth + 10
 local ridgeCanvas
 local saveImage = false
-
-local saveButton
+local width
+local height
 local widthSlider
 local heightSlider
+local saveButton
+local frequencySlider
+local thresholdSlider
+local gainSlider
+local octavesSlider
+local ampSlider
+local drawThresholdSlider
+local ridgeMap
 
-function love.load()
-	width = love.graphics.getWidth()
-	height = love.graphics.getHeight()
+local function generateRidgeMap(width, height)
+	ridgeCanvas = love.graphics.newCanvas(width, height)
 
-	createSliders()
+	local frequency = frequencySlider:GetValue()
+	local threshold = thresholdSlider:GetValue()
+	local gain = gainSlider:GetValue()
+	local octaves = octavesSlider:GetValue()
+	local amp = ampSlider:GetValue() -- Get the value from the amp slider
 
-	ridgeMap = generateRidgeMap(width, height)
+	love.graphics.setCanvas(ridgeCanvas)
+	for x = 0, width / tileSize - 1 do
+		for y = 0, height / tileSize - 1 do
+			local nx = x * frequency
+			local ny = y * frequency
 
-	saveButton = loveframes.Create("button")
-	saveButton:SetWidth(100)
-	saveButton:SetPos(10, height - 40)
-	saveButton:SetText("Save Image")
-	saveButton.OnClick = function()
-		saveImage = true
-		generateRidgeMap(width, height)
+			local value = 0
+			local currentAmp = amp -- Reset current amplitude for each tile
+
+			for i = 1, octaves do
+				value = value + love.math.noise(nx, ny) * currentAmp
+				nx = nx * 2
+				ny = ny * 2
+				currentAmp = currentAmp * 0.5 -- Reduce amplitude for each octave
+			end
+
+			-- Apply ridge algorithm
+			value = math.abs(value) -- Create creases
+			value = threshold - value -- Invert so creases are at top
+			value = value * value -- Sharpen creases
+
+			value = math.max(0, value)
+
+			if value > sliderDrawThresholdValue then
+				love.graphics.setColor(value, value, value)
+				love.graphics.rectangle("fill", x * tileSize, y * tileSize, tileSize, tileSize)
+			end
+		end
 	end
+	love.graphics.setCanvas()
+	if saveImage then
+		local imagedata = ridgeCanvas:newImageData()
+		imagedata:encode("png", "ridge_map.png")
+		saveImage = false
+	end
+
+	return ridgeCanvas
 end
 
-function love.draw()
-	love.graphics.setColor(1, 1, 1)
-	love.graphics.draw(ridgeMap, 0, 0)
 
-	loveframes.draw()
-end
-
-function love.update(dt)
-	loveframes.update(dt)
-end
-
-function createSliders()
+local function createSliders()
 	local y_offset = 10
 
 	local frequencyLabel = loveframes.Create("text")
@@ -188,7 +216,7 @@ function createSliders()
 	widthSlider:SetMinMax(100, 10000) -- Adjust the min and max as needed
 	widthSlider:SetValue(width)
 	widthSlider.OnValueChanged = function(object, value)
-		width = value
+		width = math.floor(value)
 		ridgeMap = generateRidgeMap(width, height)
 	end
 
@@ -211,7 +239,7 @@ function createSliders()
 	heightSlider:SetMinMax(100, 10000) -- Adjust the min and max as needed
 	heightSlider:SetValue(height)
 	heightSlider.OnValueChanged = function(object, value)
-		height = value
+		height = math.floor(value)
 		ridgeMap = generateRidgeMap(width, height)
 	end
 
@@ -222,58 +250,35 @@ function createSliders()
 	end
 end
 
-function generateRidgeMap(width, height)
-	ridgeCanvas = love.graphics.newCanvas(width, height)
 
-	local frequency = frequencySlider:GetValue()
-	local threshold = thresholdSlider:GetValue()
-	local gain = gainSlider:GetValue()
-	local octaves = octavesSlider:GetValue()
-	local amp = ampSlider:GetValue() -- Get the value from the amp slider
+function love.load()
+	width = love.graphics.getWidth()
+	height = love.graphics.getHeight()
 
-	love.graphics.setCanvas(ridgeCanvas)
-	for x = 0, width / tileSize - 1 do
-		for y = 0, height / tileSize - 1 do
-			local nx = x * frequency
-			local ny = y * frequency
+	createSliders()
 
-			local value = 0
-			local currentAmp = amp -- Reset current amplitude for each tile
+	ridgeMap = generateRidgeMap(width, height)
 
-			for i = 1, octaves do
-				value = value + love.math.noise(nx, ny) * currentAmp
-				nx = nx * 2
-				ny = ny * 2
-				currentAmp = currentAmp * 0.5 -- Reduce amplitude for each octave
-			end
-
-			-- Apply ridge algorithm
-			value = math.abs(value) -- Create creases
-			value = threshold - value -- Invert so creases are at top
-			value = value * value -- Sharpen creases
-
-			value = math.max(0, value)
-
-			if value > sliderDrawThresholdValue then
-				love.graphics.setColor(value, value, value)
-				love.graphics.rectangle("fill", x * tileSize, y * tileSize, tileSize, tileSize)
-			end
-		end
+	saveButton = loveframes.Create("button")
+	saveButton:SetWidth(100)
+	saveButton:SetPos(10, height - 40)
+	saveButton:SetText("Save Image")
+	saveButton.OnClick = function()
+		saveImage = true
+		generateRidgeMap(width, height)
 	end
-	love.graphics.setCanvas()
-	if saveImage then
-		local imagedata = ridgeCanvas:newImageData()
-		imagedata:encode("png", "ridge_map.png")
-		saveImage = false
-	end
-
-	return ridgeCanvas
 end
 
--- function saveRidgeMapImage()
--- 	local image = generateRidgeMapImage(width, height)
--- 	image:encode("png", "ridge_map.png")
--- end
+function love.draw()
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(ridgeMap, 0, 0)
+
+	loveframes.draw()
+end
+
+function love.update(dt)
+	loveframes.update(dt)
+end
 
 function love.mousepressed(x, y, button)
 	loveframes.mousepressed(x, y, button)
