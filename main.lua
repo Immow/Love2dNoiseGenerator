@@ -269,21 +269,21 @@ function love.load()
 	end
 end
 
-function love.draw()
-	love.graphics.setColor(1, 1, 1)
-	love.graphics.draw(ridgeMap, 0, 0)
-
-	loveframes.draw()
-end
-
-function love.update(dt)
-	loveframes.update(dt)
-end
-
 function love.mousepressed(x, y, button)
 	loveframes.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
 	loveframes.mousereleased(x, y, button)
+end
+
+function love.update(dt)
+	loveframes.update(dt)
+end
+
+function love.draw()
+	love.graphics.setColor(1, 1, 1)
+	love.graphics.draw(ridgeMap, 0, 0)
+
+	loveframes.draw()
 end
