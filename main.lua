@@ -1,38 +1,15 @@
-local loveframes = require("loveframes")
+LoveFrames = require("loveframes")
+local SliderClass = require("sliders")
 
 local tileSize = 16
-local sliderDrawThresholdValue = 0.5
-local sliderWidth = 200
-local setPosLabelX = 10
-local setPosSliderX = 120
-local setPosSliderValueX = setPosSliderX + sliderWidth + 10
 local ridgeCanvas
-local saveImage = false
-local width
-local height
-local widthSlider
-local heightSlider
+WW = love.graphics.getWidth()
+WH = love.graphics.getHeight()
 local saveButton
-local frequencySlider
-local thresholdSlider
-local offsetXSlider
-local offsetYSlider
-local gainSlider
-local octavesSlider
-local ampSlider
-local drawThresholdSlider
-local offsetX = 100
-local offsetY = 100
-local ridgeMap
+RidgeMap = {}
 
-local function generateRidgeMap(width, height)
+function GenerateRidgeMap(width, height, frequency, threshold, octaves, amp, drawThresholdSlider, offsetX, offsetY)
 	ridgeCanvas = love.graphics.newCanvas(width, height)
-
-	local frequency = frequencySlider:GetValue()
-	local threshold = thresholdSlider:GetValue()
-	-- local gain = gainSlider:GetValue()
-	local octaves = octavesSlider:GetValue()
-	local amp = ampSlider:GetValue() -- Get the value from the amp slider
 
 	love.graphics.setCanvas(ridgeCanvas)
 	for x = 0, width / tileSize - 1 do
@@ -41,280 +18,71 @@ local function generateRidgeMap(width, height)
 			local ny = y * frequency
 
 			local value = 0
-			local currentAmp = amp -- Reset current amplitude for each tile
+			local currentAmp = amp
 
 			for i = 1, octaves do
 				value = value + love.math.noise(nx + offsetX, ny + offsetY) * currentAmp
 				nx = nx * 2
 				ny = ny * 2
-				currentAmp = currentAmp * 0.5 -- Reduce amplitude for each octave
+				currentAmp = currentAmp * 0.5
 			end
 
-			-- Apply ridge algorithm
-			value = math.abs(value) -- Create creases
-			value = threshold - value -- Invert so creases are at top
-			value = value * value -- Sharpen creases
+			value = math.abs(value)
+			value = threshold - value
+			value = value * value
 
 			value = math.max(0, value)
 
-			if value > sliderDrawThresholdValue then
+			if value > drawThresholdSlider then
 				love.graphics.setColor(value, value, value)
 				love.graphics.rectangle("fill", x * tileSize, y * tileSize, tileSize, tileSize)
 			end
 		end
 	end
 	love.graphics.setCanvas()
-	if saveImage then
-		local imagedata = ridgeCanvas:newImageData()
-		imagedata:encode("png", "ridge_map.png")
-		saveImage = false
-	end
 
 	return ridgeCanvas
 end
 
-local function createSliders()
-	local y_offset = 10
-
-	local frequencyLabel = loveframes.Create("text")
-	frequencyLabel:SetText("Frequency:")
-	frequencyLabel:SetPos(setPosLabelX, y_offset)
-
-	frequencySlider = loveframes.Create("slider")
-	frequencySlider:SetPos(setPosSliderX, y_offset)
-	frequencySlider:SetWidth(sliderWidth)
-	frequencySlider:SetMinMax(0.001, 0.1)
-	frequencySlider:SetDecimals(3)
-	frequencySlider:SetValue(0.01)
-	frequencySlider.OnValueChanged = function(object, value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local frequencyValueLabel = loveframes.Create("text")
-	frequencyValueLabel:SetPos(setPosSliderValueX, y_offset)
-	frequencyValueLabel.Update = function(object)
-		object:SetText(tostring(frequencySlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local thresholdLabel = loveframes.Create("text")
-	thresholdLabel:SetText("Threshold:")
-	thresholdLabel:SetPos(setPosLabelX, y_offset)
-
-	thresholdSlider = loveframes.Create("slider")
-	thresholdSlider:SetPos(setPosSliderX, y_offset)
-	thresholdSlider:SetWidth(sliderWidth)
-	thresholdSlider:SetMinMax(0, 1)
-	thresholdSlider:SetDecimals(2)
-	thresholdSlider:SetValue(0.5)
-	thresholdSlider.OnValueChanged = function(object, value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local thresholdValueLabel = loveframes.Create("text")
-	thresholdValueLabel:SetPos(setPosSliderValueX, y_offset)
-	thresholdValueLabel.Update = function(object)
-		object:SetText(tostring(thresholdSlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local octavesLabel = loveframes.Create("text")
-	octavesLabel:SetText("Octaves:")
-	octavesLabel:SetPos(setPosLabelX, y_offset)
-
-	octavesSlider = loveframes.Create("slider")
-	octavesSlider:SetPos(setPosSliderX, y_offset)
-	octavesSlider:SetWidth(sliderWidth)
-	octavesSlider:SetMinMax(1, 10)
-	octavesSlider:SetValue(6)
-	octavesSlider.OnValueChanged = function(object, value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local octavesValueLabel = loveframes.Create("text")
-	octavesValueLabel:SetPos(setPosSliderValueX, y_offset)
-	octavesValueLabel.Update = function(object)
-		object:SetText(tostring(octavesSlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local ampLabel = loveframes.Create("text")
-	ampLabel:SetText("Amplitude:")
-	ampLabel:SetPos(setPosLabelX, y_offset)
-
-	ampSlider = loveframes.Create("slider")
-	ampSlider:SetPos(setPosSliderX, y_offset)
-	ampSlider:SetWidth(sliderWidth)
-	ampSlider:SetMinMax(0.1, 5)
-	ampSlider:SetDecimals(1)
-	ampSlider:SetValue(1)
-	ampSlider.OnValueChanged = function(object, value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local ampValueLabel = loveframes.Create("text")
-	ampValueLabel:SetPos(setPosSliderValueX, y_offset)
-	ampValueLabel.Update = function(object)
-		object:SetText(tostring(ampSlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local drawThresholdLabel = loveframes.Create("text")
-	drawThresholdLabel:SetText("Draw Threshold:")
-	drawThresholdLabel:SetPos(setPosLabelX, y_offset)
-
-	drawThresholdSlider = loveframes.Create("slider")
-	drawThresholdSlider:SetPos(setPosSliderX, y_offset)
-	drawThresholdSlider:SetWidth(sliderWidth)
-	drawThresholdSlider:SetMinMax(0, 1)
-	drawThresholdSlider:SetDecimals(2)
-	drawThresholdSlider:SetValue(0.5)
-	drawThresholdSlider.OnValueChanged = function(object, value)
-		sliderDrawThresholdValue = value
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local drawThresholdValueLabel = loveframes.Create("text")
-	drawThresholdValueLabel:SetPos(setPosSliderValueX, y_offset)
-	drawThresholdValueLabel.Update = function(object)
-		object:SetText(tostring(drawThresholdSlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local widthLabel = loveframes.Create("text")
-	widthLabel:SetText("Width:")
-	widthLabel:SetPos(setPosLabelX, y_offset)
-
-	widthSlider = loveframes.Create("slider")
-	widthSlider:SetPos(setPosSliderX, y_offset)
-	widthSlider:SetWidth(sliderWidth)
-	widthSlider:SetMinMax(100, 10000)
-	widthSlider:SetValue(width)
-	widthSlider.OnValueChanged = function(object, value)
-		width = math.floor(value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local widthValueLabel = loveframes.Create("text")
-	widthValueLabel:SetPos(setPosSliderValueX, y_offset)
-	widthValueLabel.Update = function(object)
-		object:SetText(tostring(math.floor(widthSlider:GetValue())))
-	end
-
-	y_offset = y_offset + 40
-
-	local heightLabel = loveframes.Create("text")
-	heightLabel:SetText("Height:")
-	heightLabel:SetPos(setPosLabelX, y_offset)
-
-	heightSlider = loveframes.Create("slider")
-	heightSlider:SetPos(setPosSliderX, y_offset)
-	heightSlider:SetWidth(sliderWidth)
-	heightSlider:SetMinMax(100, 10000)
-	heightSlider:SetValue(math.floor(height))
-	heightSlider.OnValueChanged = function(object, value)
-		height = math.floor(value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local heightValueLabel = loveframes.Create("text")
-	heightValueLabel:SetPos(setPosSliderValueX, y_offset)
-	heightValueLabel.Update = function(object)
-		object:SetText(tostring(math.floor(heightSlider:GetValue())))
-	end
-
-
-	y_offset = y_offset + 40
-
-	offsetXSlider = loveframes.Create("text")
-	offsetXSlider:SetText("OffsetX:")
-	offsetXSlider:SetPos(setPosLabelX, y_offset)
-
-	offsetXSlider = loveframes.Create("slider")
-	offsetXSlider:SetPos(setPosSliderX, y_offset)
-	offsetXSlider:SetWidth(sliderWidth)
-	offsetXSlider:SetMinMax(1, 10000)
-	offsetXSlider:SetValue(offsetX)
-	offsetXSlider.OnValueChanged = function(object, value)
-		offsetX = math.floor(value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local offsetXLabel = loveframes.Create("text")
-	offsetXLabel:SetPos(setPosSliderValueX, y_offset)
-	offsetXLabel.Update = function(object)
-		object:SetText(tostring(math.floor(offsetXSlider:GetValue())))
-	end
-
-	y_offset = y_offset + 40
-
-	offsetYSlider = loveframes.Create("text")
-	offsetYSlider:SetText("OffsetY:")
-	offsetYSlider:SetPos(setPosLabelX, y_offset)
-
-	offsetYSlider = loveframes.Create("slider")
-	offsetYSlider:SetPos(setPosSliderX, y_offset)
-	offsetYSlider:SetWidth(sliderWidth)
-	offsetYSlider:SetMinMax(1, 10000)
-	offsetYSlider:SetValue(offsetY)
-	offsetYSlider.OnValueChanged = function(object, value)
-		offsetY = math.floor(value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local offsetYLabel = loveframes.Create("text")
-	offsetYLabel:SetPos(setPosSliderValueX, y_offset)
-	offsetYLabel.Update = function(object)
-		object:SetText(tostring(math.floor(offsetYSlider:GetValue())))
-	end
-end
-
 function love.load()
-	width = love.graphics.getWidth()
-	height = love.graphics.getHeight()
+	local sliders = SliderClass:createSliders()
 
-	createSliders()
+	RidgeMap = GenerateRidgeMap(sliders[1], sliders[2], sliders[3], sliders[4], sliders[5], sliders[6],
+		sliders[7], sliders[8], sliders[9])
 
-	ridgeMap = generateRidgeMap(width, height)
-
-	saveButton = loveframes.Create("button")
+	saveButton = LoveFrames.Create("button")
 	saveButton:SetWidth(100)
-	saveButton:SetPos(10, height - 40)
+	saveButton:SetPos(10, WH - 40)
 	saveButton:SetText("Save Image")
 	saveButton.OnClick = function()
-		saveImage = true
-		generateRidgeMap(width, height)
+		local imagedata = ridgeCanvas:newImageData()
+		imagedata:encode("png", "ridge_map.png")
 	end
 end
 
 function love.keypressed(key, scancode)
-	loveframes.keypressed(key, scancode)
+	LoveFrames.keypressed(key, scancode)
 end
 
 function love.textinput(text)
-	loveframes.textinput(text)
+	LoveFrames.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
-	loveframes.mousepressed(x, y, button)
+	LoveFrames.mousepressed(x, y, button)
 end
 
 function love.mousereleased(x, y, button)
-	loveframes.mousereleased(x, y, button)
+	LoveFrames.mousereleased(x, y, button)
 end
 
 function love.update(dt)
-	loveframes.update(dt)
+	LoveFrames.update(dt)
 end
 
 function love.draw()
 	love.graphics.setColor(1, 1, 1)
-	love.graphics.draw(ridgeMap, 0, 0)
+	love.graphics.draw(RidgeMap, 0, 0)
 
-	loveframes.draw()
+	LoveFrames.draw()
 end
