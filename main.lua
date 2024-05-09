@@ -15,10 +15,14 @@ local heightSlider
 local saveButton
 local frequencySlider
 local thresholdSlider
+local offsetXSlider
+local offsetYSlider
 local gainSlider
 local octavesSlider
 local ampSlider
 local drawThresholdSlider
+local offsetX = 100
+local offsetY = 100
 local ridgeMap
 
 local function generateRidgeMap(width, height)
@@ -26,7 +30,7 @@ local function generateRidgeMap(width, height)
 
 	local frequency = frequencySlider:GetValue()
 	local threshold = thresholdSlider:GetValue()
-	local gain = gainSlider:GetValue()
+	-- local gain = gainSlider:GetValue()
 	local octaves = octavesSlider:GetValue()
 	local amp = ampSlider:GetValue() -- Get the value from the amp slider
 
@@ -40,7 +44,7 @@ local function generateRidgeMap(width, height)
 			local currentAmp = amp -- Reset current amplitude for each tile
 
 			for i = 1, octaves do
-				value = value + love.math.noise(nx, ny) * currentAmp
+				value = value + love.math.noise(nx + offsetX, ny + offsetY) * currentAmp
 				nx = nx * 2
 				ny = ny * 2
 				currentAmp = currentAmp * 0.5 -- Reduce amplitude for each octave
@@ -68,7 +72,6 @@ local function generateRidgeMap(width, height)
 
 	return ridgeCanvas
 end
-
 
 local function createSliders()
 	local y_offset = 10
@@ -113,28 +116,6 @@ local function createSliders()
 	thresholdValueLabel:SetPos(setPosSliderValueX, y_offset)
 	thresholdValueLabel.Update = function(object)
 		object:SetText(tostring(thresholdSlider:GetValue()))
-	end
-
-	y_offset = y_offset + 40
-
-	local gainLabel = loveframes.Create("text")
-	gainLabel:SetText("Gain:")
-	gainLabel:SetPos(setPosLabelX, y_offset)
-
-	gainSlider = loveframes.Create("slider")
-	gainSlider:SetPos(setPosSliderX, y_offset)
-	gainSlider:SetWidth(sliderWidth)
-	gainSlider:SetMinMax(0.1, 5)
-	gainSlider:SetDecimals(1)
-	gainSlider:SetValue(2)
-	gainSlider.OnValueChanged = function(object, value)
-		ridgeMap = generateRidgeMap(width, height)
-	end
-
-	local gainValueLabel = loveframes.Create("text")
-	gainValueLabel:SetPos(setPosSliderValueX, y_offset)
-	gainValueLabel.Update = function(object)
-		object:SetText(tostring(gainSlider:GetValue()))
 	end
 
 	y_offset = y_offset + 40
@@ -205,7 +186,6 @@ local function createSliders()
 
 	y_offset = y_offset + 40
 
-	-- Slider for adjusting the width of the noise map
 	local widthLabel = loveframes.Create("text")
 	widthLabel:SetText("Width:")
 	widthLabel:SetPos(setPosLabelX, y_offset)
@@ -213,7 +193,7 @@ local function createSliders()
 	widthSlider = loveframes.Create("slider")
 	widthSlider:SetPos(setPosSliderX, y_offset)
 	widthSlider:SetWidth(sliderWidth)
-	widthSlider:SetMinMax(100, 10000) -- Adjust the min and max as needed
+	widthSlider:SetMinMax(100, 10000)
 	widthSlider:SetValue(width)
 	widthSlider.OnValueChanged = function(object, value)
 		width = math.floor(value)
@@ -223,12 +203,11 @@ local function createSliders()
 	local widthValueLabel = loveframes.Create("text")
 	widthValueLabel:SetPos(setPosSliderValueX, y_offset)
 	widthValueLabel.Update = function(object)
-		object:SetText(tostring(widthSlider:GetValue()))
+		object:SetText(tostring(math.floor(widthSlider:GetValue())))
 	end
 
 	y_offset = y_offset + 40
 
-	-- Slider for adjusting the height of the noise map
 	local heightLabel = loveframes.Create("text")
 	heightLabel:SetText("Height:")
 	heightLabel:SetPos(setPosLabelX, y_offset)
@@ -236,8 +215,8 @@ local function createSliders()
 	heightSlider = loveframes.Create("slider")
 	heightSlider:SetPos(setPosSliderX, y_offset)
 	heightSlider:SetWidth(sliderWidth)
-	heightSlider:SetMinMax(100, 10000) -- Adjust the min and max as needed
-	heightSlider:SetValue(height)
+	heightSlider:SetMinMax(100, 10000)
+	heightSlider:SetValue(math.floor(height))
 	heightSlider.OnValueChanged = function(object, value)
 		height = math.floor(value)
 		ridgeMap = generateRidgeMap(width, height)
@@ -246,10 +225,54 @@ local function createSliders()
 	local heightValueLabel = loveframes.Create("text")
 	heightValueLabel:SetPos(setPosSliderValueX, y_offset)
 	heightValueLabel.Update = function(object)
-		object:SetText(tostring(heightSlider:GetValue()))
+		object:SetText(tostring(math.floor(heightSlider:GetValue())))
+	end
+
+
+	y_offset = y_offset + 40
+
+	offsetXSlider = loveframes.Create("text")
+	offsetXSlider:SetText("OffsetX:")
+	offsetXSlider:SetPos(setPosLabelX, y_offset)
+
+	offsetXSlider = loveframes.Create("slider")
+	offsetXSlider:SetPos(setPosSliderX, y_offset)
+	offsetXSlider:SetWidth(sliderWidth)
+	offsetXSlider:SetMinMax(1, 10000)
+	offsetXSlider:SetValue(offsetX)
+	offsetXSlider.OnValueChanged = function(object, value)
+		offsetX = math.floor(value)
+		ridgeMap = generateRidgeMap(width, height)
+	end
+
+	local offsetXLabel = loveframes.Create("text")
+	offsetXLabel:SetPos(setPosSliderValueX, y_offset)
+	offsetXLabel.Update = function(object)
+		object:SetText(tostring(math.floor(offsetXSlider:GetValue())))
+	end
+
+	y_offset = y_offset + 40
+
+	offsetYSlider = loveframes.Create("text")
+	offsetYSlider:SetText("OffsetY:")
+	offsetYSlider:SetPos(setPosLabelX, y_offset)
+
+	offsetYSlider = loveframes.Create("slider")
+	offsetYSlider:SetPos(setPosSliderX, y_offset)
+	offsetYSlider:SetWidth(sliderWidth)
+	offsetYSlider:SetMinMax(1, 10000)
+	offsetYSlider:SetValue(offsetY)
+	offsetYSlider.OnValueChanged = function(object, value)
+		offsetY = math.floor(value)
+		ridgeMap = generateRidgeMap(width, height)
+	end
+
+	local offsetYLabel = loveframes.Create("text")
+	offsetYLabel:SetPos(setPosSliderValueX, y_offset)
+	offsetYLabel.Update = function(object)
+		object:SetText(tostring(math.floor(offsetYSlider:GetValue())))
 	end
 end
-
 
 function love.load()
 	width = love.graphics.getWidth()
@@ -267,6 +290,14 @@ function love.load()
 		saveImage = true
 		generateRidgeMap(width, height)
 	end
+end
+
+function love.keypressed(key, scancode)
+	loveframes.keypressed(key, scancode)
+end
+
+function love.textinput(text)
+	loveframes.textinput(text)
 end
 
 function love.mousepressed(x, y, button)
