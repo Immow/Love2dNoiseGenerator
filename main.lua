@@ -58,15 +58,15 @@ function love.load()
 		local imagedata = ridgeCanvas:newImageData()
 		imagedata:encode("png", "ridge_map.png")
 		local data =
-			"width: " .. Sliders.frequencySlider:GetValue() .. "\n" ..
-			"height: " .. Sliders.thresholdSlider:GetValue() .. "\n" ..
-			"frequency: " .. Sliders.octavesSlider:GetValue() .. "\n" ..
-			"threshold: " .. Sliders.ampSlider:GetValue() .. "\n" ..
-			"octaves: " .. Sliders.drawThresholdSlider:GetValue() .. "\n" ..
-			"amp: " .. Sliders.offsetXSlider:GetValue() .. "\n" ..
-			"drawThreshold: " .. Sliders.offsetYSlider:GetValue() .. "\n" ..
-			"offsetX: " .. Sliders.widthSlider:GetValue() .. "\n" ..
-			"offsetY: " .. Sliders.heightSlider:GetValue() .. "\n"
+			"frequencySlider: " .. Sliders.frequencySlider:GetValue() .. "\n" ..
+			"thresholdSlider: " .. Sliders.thresholdSlider:GetValue() .. "\n" ..
+			"octavesSlider: " .. Sliders.octavesSlider:GetValue() .. "\n" ..
+			"ampSlider: " .. Sliders.ampSlider:GetValue() .. "\n" ..
+			"drawThresholdSlider: " .. Sliders.drawThresholdSlider:GetValue() .. "\n" ..
+			"offsetXSlider: " .. Sliders.offsetXSlider:GetValue() .. "\n" ..
+			"offsetYSlider: " .. Sliders.offsetYSlider:GetValue() .. "\n" ..
+			"widthSlider: " .. Sliders.widthSlider:GetValue() .. "\n" ..
+			"heightSlider: " .. Sliders.heightSlider:GetValue() .. "\n"
 
 		love.filesystem.write("ridgeMap.txt", data)
 	end
