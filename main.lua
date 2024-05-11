@@ -1,5 +1,5 @@
 LoveFrames = require("loveframes")
-local SliderClass = require("sliders")
+local Sliders = require("sliders")
 
 local tileSize = 16
 local ridgeCanvas
@@ -8,7 +8,7 @@ WH = love.graphics.getHeight()
 local saveButton
 RidgeMap = {}
 
-function GenerateRidgeMap(width, height, frequency, threshold, octaves, amp, drawThresholdSlider, offsetX, offsetY)
+function GenerateRidgeMap(width, height, frequency, threshold, octaves, amp, drawThreshold, offsetX, offsetY)
 	ridgeCanvas = love.graphics.newCanvas(width, height)
 
 	love.graphics.setCanvas(ridgeCanvas)
@@ -33,7 +33,7 @@ function GenerateRidgeMap(width, height, frequency, threshold, octaves, amp, dra
 
 			value = math.max(0, value)
 
-			if value > drawThresholdSlider then
+			if value > drawThreshold then
 				love.graphics.setColor(value, value, value)
 				love.graphics.rectangle("fill", x * tileSize, y * tileSize, tileSize, tileSize)
 			end
@@ -45,7 +45,7 @@ function GenerateRidgeMap(width, height, frequency, threshold, octaves, amp, dra
 end
 
 function love.load()
-	local sliders = SliderClass:createSliders()
+	local sliders = Sliders:createSliders()
 
 	RidgeMap = GenerateRidgeMap(sliders[1], sliders[2], sliders[3], sliders[4], sliders[5], sliders[6],
 		sliders[7], sliders[8], sliders[9])
@@ -57,6 +57,18 @@ function love.load()
 	saveButton.OnClick = function()
 		local imagedata = ridgeCanvas:newImageData()
 		imagedata:encode("png", "ridge_map.png")
+		local data =
+			"width: " .. Sliders.frequencySlider:GetValue() .. "\n" ..
+			"height: " .. Sliders.thresholdSlider:GetValue() .. "\n" ..
+			"frequency: " .. Sliders.octavesSlider:GetValue() .. "\n" ..
+			"threshold: " .. Sliders.ampSlider:GetValue() .. "\n" ..
+			"octaves: " .. Sliders.drawThresholdSlider:GetValue() .. "\n" ..
+			"amp: " .. Sliders.offsetXSlider:GetValue() .. "\n" ..
+			"drawThreshold: " .. Sliders.offsetYSlider:GetValue() .. "\n" ..
+			"offsetX: " .. Sliders.widthSlider:GetValue() .. "\n" ..
+			"offsetY: " .. Sliders.heightSlider:GetValue() .. "\n"
+
+		love.filesystem.write("ridgeMap.txt", data)
 	end
 end
 
